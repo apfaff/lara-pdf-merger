@@ -19,14 +19,14 @@ class PdfManage
      * @param $pages
      * @return void
      */
-    public function addPDF($filepath, $pages = 'all', $orientation = null)
+    public function addPDF($filepath, $pages = 'all')
     {
         if (file_exists($filepath)) {
             if (strtolower($pages) != 'all') {
                 $pages = $this->_rewritepages($pages);
             }
 
-            $this->_files[] = array($filepath, $pages, $orientation);
+            $this->_files[] = array($filepath, $pages);
         } else {
             throw new Exception("Could not locate PDF on '$filepath'");
         }
@@ -38,10 +38,9 @@ class PdfManage
      * Merges your provided PDFs and outputs to specified location.
      * @param $outputmode
      * @param $outputname
-     * @param $orientation
      * @return PDF
      */
-    public function merge($outputmode = 'browser', $outputpath = 'newfile.pdf', $orientation = 'P')
+    public function merge($outputmode = 'browser', $outputpath = 'newfile.pdf')
     {
         if (!isset($this->_files) || !is_array($this->_files)) {
             throw new Exception("No PDFs to merge.");
@@ -55,7 +54,6 @@ class PdfManage
         foreach ($this->_files as $file) {
             $filename  = $file[0];
             $filepages = $file[1];
-            $fileorientation = (!is_null($file[2])) ? $file[2] : $orientation;
 
             $count = $fpdi->setSourceFile($filename);
 
@@ -64,6 +62,7 @@ class PdfManage
                 for ($i=1; $i<=$count; $i++) {
                     $template   = $fpdi->importPage($i);
                     $size       = $fpdi->getTemplateSize($template);
+                    $fileorientation = ($size['h'] > $size['w']) ? 'P' : 'L';
 
                     $fpdi->AddPage($fileorientation, array($size['w'], $size['h']));
                     $fpdi->useTemplate($template);
@@ -74,6 +73,7 @@ class PdfManage
                         throw new Exception("Could not load page '$page' in PDF '$filename'. Check that the page exists.");
                     }
                     $size = $fpdi->getTemplateSize($template);
+                    $fileorientation = ($size['h'] > $size['w']) ? 'P' : 'L';
 
                     $fpdi->AddPage($fileorientation, array($size['w'], $size['h']));
                     $fpdi->useTemplate($template);
@@ -160,7 +160,4 @@ class PdfManage
 
         return $newpages;
     }
-
-
-
 }
